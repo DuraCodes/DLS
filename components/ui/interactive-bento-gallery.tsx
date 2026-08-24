@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send } from 'lucide-react';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
+import { getOptimizedMediaUrl, getVideoPosterUrl } from '@/src/lib/media-optimizer';
 
 // MediaItemType defines the structure of a media item
 export interface MediaItemType {
@@ -17,119 +18,104 @@ export interface MediaItemType {
     span: string;
 }
 
-// MediaItem component renders either a video or image based on item.type
+// MediaItem component renders either a video or image based on item.type with zero-lag optimization
 export const MediaItem = ({ item, className, onClick }: { item: MediaItemType, className?: string, onClick?: () => void }) => {
-    const videoRef = useRef<HTMLVideoElement>(null); // Reference for video element
-    const [isInView, setIsInView] = useState(false); // To track if video is in the viewport
-    const [isBuffering, setIsBuffering] = useState(true);  // To track if video is buffering
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isInView, setIsInView] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Intersection Observer to detect if video is in view and play/pause accordingly
+    // Optimized URLs
+    const optimizedUrl = getOptimizedMediaUrl(item.url);
+    const posterUrl = item.type === 'video' ? getVideoPosterUrl(item.url) : undefined;
+
+    // Strict Intersection Observer to only decode and play videos when actually on screen
     useEffect(() => {
-        const options = {
-            root: null,
-            rootMargin: '50px',
-            threshold: 0.1
-        };
+        if (item.type !== 'video') return;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                setIsInView(entry.isIntersecting); // Set isInView to true if the video is in view
-            });
-        }, options);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.15);
+                });
+            },
+            {
+                root: null,
+                rootMargin: '100px 0px',
+                threshold: [0, 0.15, 0.5],
+            }
+        );
 
-        if (videoRef.current) {
-            observer.observe(videoRef.current); // Start observing the video element
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
         }
 
         return () => {
-            if (videoRef.current) {
-                observer.unobserve(videoRef.current); // Clean up observer when component unmounts
-            }
+            observer.disconnect();
         };
-    }, []);
+    }, [item.type]);
 
-    // Handle video play/pause based on whether the video is in view or not
+    // Handle video play/pause with graceful fallback and no console noise
     useEffect(() => {
-        let mounted = true;
+        if (item.type !== 'video' || !videoRef.current) return;
 
-        const handleVideoPlay = async () => {
-            if (!videoRef.current || !isInView || !mounted) return;
-
-            try {
-                if (videoRef.current.readyState >= 3) {
-                    setIsBuffering(false);
-                    await videoRef.current.play();
-                } else {
-                    setIsBuffering(true);
-                    await new Promise((resolve) => {
-                        if (videoRef.current) {
-                            videoRef.current.oncanplay = resolve;
-                        }
-                    });
-                    if (mounted && videoRef.current) {
-                        setIsBuffering(false);
-                        await videoRef.current.play();
-                    }
-                }
-            } catch (error) {
-                console.warn("Video playback notice:", error);
-            }
-        };
+        const video = videoRef.current;
 
         if (isInView) {
-            handleVideoPlay();
-        } else if (videoRef.current) {
-            videoRef.current.pause();
-        }
-
-        return () => {
-            mounted = false;
-            if (videoRef.current) {
-                videoRef.current.pause();
-                videoRef.current.removeAttribute('src');
-                videoRef.current.load();
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        setIsLoaded(true);
+                    })
+                    .catch(() => {
+                        // Auto-play was prevented or video paused while switching tabs
+                    });
             }
-        };
-    }, [isInView]);
+        } else {
+            video.pause();
+        }
+    }, [isInView, item.type]);
 
-    // Render either a video or image based on item.type
+    // Render optimized video
     if (item.type === 'video') {
         return (
-            <div className={`${className} relative overflow-hidden bg-[#111216]`}>
+            <div
+                ref={containerRef}
+                className={`${className} relative overflow-hidden bg-[#111216] transform-gpu`}
+                onClick={onClick}
+            >
                 <video
                     ref={videoRef}
-                    className="w-full h-full object-cover"
-                    onClick={onClick}
+                    className="w-full h-full object-cover transform-gpu"
                     playsInline
                     muted
                     loop
-                    preload="auto"
+                    preload="metadata"
+                    poster={posterUrl}
                     style={{
-                        opacity: isBuffering ? 0.8 : 1,
-                        transition: 'opacity 0.2s',
                         transform: 'translateZ(0)',
                         willChange: 'transform',
                     }}
                 >
-                    <source src={item.url} type="video/mp4" />
+                    <source src={optimizedUrl} type="video/mp4" />
                 </video>
-                {isBuffering && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
-                        <div className="w-6 h-6 border-2 border-[#4EFE32]/30 border-t-[#4EFE32] rounded-full animate-spin" />
-                    </div>
-                )}
             </div>
         );
     }
 
+    // Render optimized image with lazy loading and asynchronous decoding
     return (
         <img
-            src={item.url}
+            src={optimizedUrl}
             alt={item.title}
-            className={`${className} object-cover cursor-pointer bg-[#111216]`}
+            className={`${className} object-cover cursor-pointer bg-[#111216] transform-gpu`}
             onClick={onClick}
             loading="lazy"
             decoding="async"
+            style={{
+                transform: 'translateZ(0)',
+            }}
         />
     );
 };

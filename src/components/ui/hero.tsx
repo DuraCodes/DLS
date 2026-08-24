@@ -4,11 +4,14 @@ import { PulsingBorder } from "@paper-design/shaders-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Play, Pause, Volume2, VolumeX, Sparkles, Building2 } from "lucide-react"
 import { ShimmerButton } from "@/components/ui/shimmer-button"
+import { getOptimizedMediaUrl, getVideoPosterUrl } from "@/src/lib/media-optimizer"
 
 export interface ShaderShowcaseProps {
   onNavigateGallery?: () => void;
   onNavigateContact?: () => void;
 }
+
+const HERO_RAW_VIDEO_URL = "https://ik.imagekit.io/dura/Ultra_cinematic_low_angle_arch%20(1).mp4?updatedAt=1787300403221";
 
 export default function ShaderShowcase({ onNavigateGallery, onNavigateContact }: ShaderShowcaseProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -17,6 +20,11 @@ export default function ShaderShowcase({ onNavigateGallery, onNavigateContact }:
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const heroVideoUrl = getOptimizedMediaUrl(HERO_RAW_VIDEO_URL, {
+    quality: 75,
+  })
+  const heroPosterUrl = getVideoPosterUrl(HERO_RAW_VIDEO_URL)
 
   useEffect(() => {
     const handleMouseEnter = () => setIsActive(true)
@@ -28,13 +36,36 @@ export default function ShaderShowcase({ onNavigateGallery, onNavigateContact }:
       container.addEventListener("mouseleave", handleMouseLeave)
     }
 
+    // Viewport observer: pause hero video when scrolled past hero section to save device CPU/GPU
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (videoRef.current) {
+            if (entry.isIntersecting) {
+              if (isPlaying) {
+                videoRef.current.play().catch(() => {});
+              }
+            } else {
+              videoRef.current.pause();
+            }
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (container) {
+      observer.observe(container);
+    }
+
     return () => {
+      observer.disconnect();
       if (container) {
         container.removeEventListener("mouseenter", handleMouseEnter)
         container.removeEventListener("mouseleave", handleMouseLeave)
       }
     }
-  }, [])
+  }, [isPlaying])
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -60,12 +91,15 @@ export default function ShaderShowcase({ onNavigateGallery, onNavigateContact }:
       {/* Video Background */}
       <video
         ref={videoRef}
-        src="https://ik.imagekit.io/dura/Ultra_cinematic_low_angle_arch%20(1).mp4?updatedAt=1787300403221"
+        src={heroVideoUrl}
+        poster={heroPosterUrl}
         autoPlay
         loop
         muted={isMuted}
         playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0"
+        preload="auto"
+        className="absolute inset-0 w-full h-full object-cover z-0 transform-gpu"
+        style={{ transform: 'translateZ(0)' }}
       />
 
       {/* Subtle overlay for text readability while keeping the video very visible */}

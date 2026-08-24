@@ -170,12 +170,12 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
 
   return (
     <div className="min-h-screen w-full bg-[#111216] text-[#ECECEC] flex flex-col selection:bg-[#4EFE32]/30 selection:text-white relative overflow-x-hidden">
-      {/* Ambient background glows */}
-      <div className="fixed top-0 left-1/4 w-[35rem] h-[35rem] bg-[#4EFE32]/[0.03] blur-[150px] pointer-events-none" />
-      <div className="fixed bottom-10 right-1/4 w-[40rem] h-[40rem] bg-[#00C2CB]/[0.035] blur-[170px] pointer-events-none" />
+      {/* Ambient background glows with GPU layer containment */}
+      <div className="fixed top-0 left-1/4 w-[25rem] md:w-[35rem] h-[25rem] md:h-[35rem] bg-[#4EFE32]/[0.025] blur-[100px] md:blur-[150px] pointer-events-none transform-gpu" style={{ transform: 'translateZ(0)' }} />
+      <div className="fixed bottom-10 right-1/4 w-[28rem] md:w-[40rem] h-[28rem] md:h-[40rem] bg-[#00C2CB]/[0.03] blur-[110px] md:blur-[170px] pointer-events-none transform-gpu" style={{ transform: 'translateZ(0)' }} />
 
       {/* Sticky/Fixed Top Navigation Header */}
-      <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-[#111216]/90 border-b border-white/10 px-4 sm:px-6 md:px-8 py-3 sm:py-4 transition-all">
+      <header className="sticky top-0 z-50 w-full backdrop-blur-md md:backdrop-blur-xl bg-[#111216]/95 border-b border-white/10 px-4 sm:px-6 md:px-8 py-3 sm:py-4 transition-all transform-gpu">
         <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
           
           {/* Top-Left Corner: Back to Overview Pill */}

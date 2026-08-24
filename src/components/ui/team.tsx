@@ -84,9 +84,12 @@ export default function TeamSection({
                 <div className="relative h-96 w-full overflow-hidden rounded-2xl bg-[#1A1C22] border border-white/10 group-hover:border-[#4EFE32]/50 transition-all duration-500 shadow-xl group-hover:shadow-[#4EFE32]/10">
                   <img
                     alt={member.name}
-                    className="h-full w-full object-cover grayscale contrast-105 transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105"
+                    className="h-full w-full object-cover grayscale contrast-105 transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105 transform-gpu"
                     src={member.image}
+                    loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
+                    style={{ transform: 'translateZ(0)' }}
                   />
                   
                   {/* Subtle top subtle vignette */}

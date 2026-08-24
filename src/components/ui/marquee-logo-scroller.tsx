@@ -94,16 +94,18 @@ const MarqueeLogoScroller = React.forwardRef<HTMLDivElement, MarqueeLogoScroller
             }}
           >
             <div 
-              className="flex w-max items-center gap-5 py-2 pr-5 hover:[animation-play-state:paused] transition-all duration-300 ease-in-out" 
+              className="flex w-max items-center gap-5 py-2 pr-5 hover:[animation-play-state:paused] transition-all duration-300 ease-in-out transform-gpu" 
               style={{
                 animation: `marquee ${animationDuration} linear infinite`,
+                transform: 'translateZ(0)',
+                willChange: 'transform',
               }}
             >
               {/* Render logos twice to create a seamless loop */}
               {[...logos, ...logos].map((logo, index) => (
                 <div
                   key={index}
-                  className="group relative h-20 md:h-24 w-44 md:w-52 shrink-0 flex items-center justify-center rounded-2xl bg-[#1A1C22]/90 border border-white/10 hover:border-[#4EFE32]/50 backdrop-blur-md overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(78,254,50,0.12)] cursor-pointer"
+                  className="group relative h-20 md:h-24 w-44 md:w-52 shrink-0 flex items-center justify-center rounded-2xl bg-[#1A1C22]/90 border border-white/10 hover:border-[#4EFE32]/50 backdrop-blur-sm md:backdrop-blur-md overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(78,254,50,0.12)] cursor-pointer transform-gpu"
                 >
                   {/* Subtle ambient gradient overlay revealed on hover matching brand + page theme */}
                   <div
@@ -121,8 +123,10 @@ const MarqueeLogoScroller = React.forwardRef<HTMLDivElement, MarqueeLogoScroller
                   <img
                     src={logo.src}
                     alt={logo.alt}
+                    loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
-                    className="relative h-10 md:h-12 w-32 object-contain filter drop-shadow-md transition-transform duration-300 group-hover:scale-110"
+                    className="relative h-10 md:h-12 w-32 object-contain filter drop-shadow-md transition-transform duration-300 group-hover:scale-110 transform-gpu"
                   />
                 </div>
               ))}
