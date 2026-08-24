@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: 228 13% 7%; /* #111216 Deep Charcoal */
+    --foreground: 0 0% 93%; /* #ECECEC Off-White */
+    --card: 225 13% 12%; /* #1A1C22 Slate Gray */
+    --card-foreground: 0 0% 93%; /* #ECECEC */
+    --popover: 225 13% 12%;
+    --popover-foreground: 0 0% 93%;
+    --primary: 112 99% 60%; /* #4EFE32 Neon Lime / Electric Green */
+    --primary-foreground: 228 13% 7%; /* #111216 */
+    --secondary: 183 100% 40%; /* #00C2CB Cyan / Teal */
+    --secondary-foreground: 228 13% 7%;
+    --muted: 225 13% 15%;
+    --muted-foreground: 220 10% 65%;
+    --accent: 225 13% 16%;
+    --accent-foreground: 0 0% 93%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 225 13% 18%;
+    --input: 225 13% 16%;
+    --ring: 112 99% 60%; /* #4EFE32 */
+    --radius: 0.75rem;
+  }
+}
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* Palette Brand Colors */
+  --color-neon-lime: #4EFE32;
+  --color-cyan-teal: #00C2CB;
+  --color-deep-charcoal: #111216;
+  --color-slate-gray: #1A1C22;
+  --color-off-white: #ECECEC;
+
+  /* Typography / Fonts from reference image */
+  --font-sans: "Barlow Semi Condensed", system-ui, -apple-system, sans-serif;
+  --font-condensed: "Barlow Condensed", sans-serif;
+  --font-heading: "Barlow Condensed", sans-serif;
+  --font-serif: "DM Serif Display", "Playfair Display", Georgia, serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans), sans-serif;
+    letter-spacing: 0.015em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading), sans-serif;
+  }
+}
+
+@layer utilities {
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(calc(-100% - var(--gap, 1.5rem)));
+    }
+  }
+
+  @keyframes marquee-vertical {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(calc(-100% - var(--gap, 1.5rem)));
+    }
+  }
+
+  @keyframes bubble {
+    0% {
+      transform: translateY(0) translateX(0) scale(0.5);
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.5;
+    }
+    80% {
+      opacity: 0.3;
+    }
+    100% {
+      transform: translateY(-80vh) translateX(calc(var(--rand-x-offset, 1) * 8vw)) scale(1.2);
+      opacity: 0;
+    }
+  }
+
+  @keyframes spin-around {
+    0% {
+      transform: translateZ(0) rotate(0);
+    }
+    15%, 35% {
+      transform: translateZ(0) rotate(90deg);
+    }
+    65%, 85% {
+      transform: translateZ(0) rotate(270deg);
+    }
+    100% {
+      transform: translateZ(0) rotate(360deg);
+    }
+  }
+
+  @keyframes shimmer-slide {
+    to {
+      transform: translate(calc(100cqw - 100%), 0);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee var(--duration, 25s) infinite linear;
+  }
+
+  .animate-marquee-vertical {
+    animation: marquee-vertical var(--duration, 25s) infinite linear;
+  }
+
+  .animate-bubble {
+    animation: bubble var(--animation-duration, 15s) ease-in-out infinite;
+  }
+
+  .animate-shimmer-slide {
+    animation: shimmer-slide var(--speed, 3s) ease-in-out infinite alternate;
+  }
+
+  .animate-spin-around {
+    animation: spin-around calc(var(--speed, 3s) * 2) infinite linear;
+  }
+}
+
