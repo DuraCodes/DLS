@@ -20,11 +20,33 @@ export default function ShaderShowcase({ onNavigateGallery, onNavigateContact }:
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false)
 
   const heroVideoUrl = getOptimizedMediaUrl(HERO_RAW_VIDEO_URL, {
     quality: 75,
   })
   const heroPosterUrl = getVideoPosterUrl(HERO_RAW_VIDEO_URL)
+
+  useEffect(() => {
+    // Force DOM property muted immediately for iOS Safari compliance
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true
+      videoRef.current.muted = true
+      
+      const playPromise = videoRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsAutoplayBlocked(false)
+          })
+          .catch((err) => {
+            // Autoplay blocked by iOS Low Power Mode or user preference
+            console.info("Autoplay restricted by device power mode - rendering high-res poster fallback seamlessly")
+            setIsAutoplayBlocked(true)
+          })
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const handleMouseEnter = () => setIsActive(true)
@@ -43,23 +65,23 @@ export default function ShaderShowcase({ onNavigateGallery, onNavigateContact }:
           if (videoRef.current) {
             if (entry.isIntersecting) {
               if (isPlaying) {
-                videoRef.current.play().catch(() => {});
+                videoRef.current.play().catch(() => {})
               }
             } else {
-              videoRef.current.pause();
+              videoRef.current.pause()
             }
           }
-        });
+        })
       },
       { threshold: 0.1 }
-    );
+    )
 
     if (container) {
-      observer.observe(container);
+      observer.observe(container)
     }
 
     return () => {
-      observer.disconnect();
+      observer.disconnect()
       if (container) {
         container.removeEventListener("mouseenter", handleMouseEnter)
         container.removeEventListener("mouseleave", handleMouseLeave)
@@ -73,22 +95,41 @@ export default function ShaderShowcase({ onNavigateGallery, onNavigateContact }:
         videoRef.current.pause()
         setIsPlaying(false)
       } else {
-        videoRef.current.play()
-        setIsPlaying(true)
+        videoRef.current.play().then(() => {
+          setIsAutoplayBlocked(false)
+          setIsPlaying(true)
+        }).catch(() => {
+          setIsPlaying(true)
+        })
       }
     }
   }
 
   const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted
-      setIsMuted(!isMuted)
+      const nextMuted = !isMuted
+      videoRef.current.muted = nextMuted
+      setIsMuted(nextMuted)
+      // If user un-mutes, ensure it's actively playing with audio
+      if (!nextMuted && videoRef.current.paused) {
+        videoRef.current.play().catch(() => {})
+        setIsPlaying(true)
+      }
     }
   }
 
   return (
     <div ref={containerRef} className="min-h-screen min-h-[100dvh] bg-black relative overflow-hidden flex flex-col justify-between">
-      {/* Video Background */}
+      {/* Background Poster Fallback for Low Power Mode */}
+      {heroPosterUrl && (
+        <img
+          src={heroPosterUrl}
+          alt="DLORENZ Hero Architecture"
+          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none select-none"
+        />
+      )}
+
+      {/* Video Background with Complete iOS / Android Safeguard Attribute Stack */}
       <video
         ref={videoRef}
         src={heroVideoUrl}
@@ -97,9 +138,18 @@ export default function ShaderShowcase({ onNavigateGallery, onNavigateContact }:
         loop
         muted={isMuted}
         playsInline
+        // @ts-ignore
+        webkit-playsinline="true"
+        x5-playsinline="true"
+        x-webkit-airplay="deny"
+        disablePictureInPicture
+        disableRemotePlayback
+        controls={false}
         preload="auto"
-        className="absolute inset-0 w-full h-full object-cover z-0 transform-gpu"
-        style={{ transform: 'translateZ(0)' }}
+        className={`absolute inset-0 w-full h-full object-cover z-0 transform-gpu pointer-events-none select-none transition-opacity duration-700 ${
+          isAutoplayBlocked ? "opacity-0" : "opacity-100"
+        }`}
+        style={{ transform: "translateZ(0)" }}
       />
 
       {/* Subtle overlay for text readability while keeping the video very visible */}

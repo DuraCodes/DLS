@@ -85,12 +85,25 @@ export const MediaItem = ({ item, className, onClick }: { item: MediaItemType, c
                 className={`${className} relative overflow-hidden bg-[#111216] transform-gpu`}
                 onClick={onClick}
             >
+                {posterUrl && (
+                    <img
+                        src={posterUrl}
+                        alt={item.title}
+                        className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none select-none"
+                    />
+                )}
                 <video
                     ref={videoRef}
-                    className="w-full h-full object-cover transform-gpu"
+                    className="w-full h-full object-cover transform-gpu relative z-10 pointer-events-none select-none"
                     playsInline
+                    // @ts-ignore
+                    webkit-playsinline="true"
+                    x5-playsinline="true"
                     muted
                     loop
+                    disablePictureInPicture
+                    disableRemotePlayback
+                    controls={false}
                     preload="metadata"
                     poster={posterUrl}
                     style={{
